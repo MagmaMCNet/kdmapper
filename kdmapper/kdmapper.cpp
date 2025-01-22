@@ -19,17 +19,17 @@ uint64_t kdmapper::AllocIndependentPages(HANDLE device_handle, uint32_t size)
 	return base;
 }
 
-uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 param1, ULONG64 param2, bool free, bool destroyHeader, AllocationMode mode, bool PassAllocationAddressAsFirstParam, mapCallback callback, NTSTATUS* exitCode) {
+uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 param1, ULONG64 param2, bool free, bool destroyHeader, AllocationMode mode, bool PassAllocationAddressAsFirstParam, NTSTATUS* exitCode) {
 
 	const PIMAGE_NT_HEADERS64 nt_headers = portable_executable::GetNtHeaders(data);
 
 	if (!nt_headers) {
-		Log(L"[-] Invalid format of PE image" << std::endl);
+		Log(ERROR_COLOR << L"[-] Invalid format of PE image" << RESET << std::endl);
 		return 0;
 	}
 
 	if (nt_headers->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-		Log(L"[-] Image is not 64 bit" << std::endl);
+		Log(ERROR_COLOR << L"[-] Image is not 64 bit" << RESET << std::endl);
 		return 0;
 	}
 
@@ -51,14 +51,14 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 	}
 
 	if (!kernel_image_base) {
-		Log(L"[-] Failed to allocate remote image in kernel" << std::endl);
+		Log(ERROR_COLOR << L"[-] Failed to allocate remote image in kernel" << RESET << std::endl);
 
 		VirtualFree(local_image_base, 0, MEM_RELEASE);
 		return 0;
 	}
 
 	do {
-		Log(L"[+] Image base has been allocated at 0x" << reinterpret_cast<void*>(kernel_image_base) << std::endl);
+		Log(CYAN << L"[+] Image base has been allocated at: " << DARK_GRAY << "0x" << reinterpret_cast<void*>(kernel_image_base) << RESET << std::endl);
 
 		// Copy image headers
 
@@ -78,7 +78,7 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 		uint64_t realBase = kernel_image_base;
 		if (destroyHeader) {
 			kernel_image_base -= TotalVirtualHeaderSize;
-			Log(L"[+] Skipped 0x" << std::hex << TotalVirtualHeaderSize << L" bytes of PE Header" << std::endl);
+			Log(CYAN << L"[+] Skipped " << DARK_GRAY << "0x" << std::hex << TotalVirtualHeaderSize << L" bytes of PE Header" << RESET << std::endl);
 		}
 
 		// Resolve relocs and imports
@@ -87,12 +87,12 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 
 		if (!FixSecurityCookie(local_image_base, kernel_image_base ))
 		{
-			Log(L"[-] Failed to fix cookie" << std::endl);
+			Log(RED << L"[-] Failed to fix cookie" << RESET << std::endl);
 			return 0;
 		}
 
 		if (!ResolveImports(iqvw64e_device_handle, portable_executable::GetImports(local_image_base))) {
-			Log(L"[-] Failed to resolve imports" << std::endl);
+			Log(RED << L"[-] Failed to resolve imports" << RESET << std::endl);
 			kernel_image_base = realBase;
 			break;
 		}
@@ -100,28 +100,20 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 		// Write fixed image to kernel
 
 		if (!intel_driver::WriteMemory(iqvw64e_device_handle, realBase, (PVOID)((uintptr_t)local_image_base + (destroyHeader ? TotalVirtualHeaderSize : 0)), image_size)) {
-			Log(L"[-] Failed to write local image to remote image" << std::endl);
+			Log(RED << L"[-] Failed to write local image to remote image" << RESET << std::endl);
 			kernel_image_base = realBase;
 			break;
 		}
 
-		// Call driver entry point
+		// Call Driver entry point
 
 		const uint64_t address_of_entry_point = kernel_image_base + nt_headers->OptionalHeader.AddressOfEntryPoint;
 
-		Log(L"[<] Calling DriverEntry 0x" << reinterpret_cast<void*>(address_of_entry_point) << std::endl);
-
-		if (callback) {
-			if (!callback(&param1, &param2, realBase, image_size)) {
-				Log(L"[-] Callback returns false, failed!" << std::endl);
-				kernel_image_base = realBase;
-				break;
-			}
-		}
+		Log(GOLD << L"[<] Calling DriverEntry: " << DARK_GRAY << "0x" << reinterpret_cast<void*>(address_of_entry_point) << RESET << std::endl);
 
 		NTSTATUS status = 0;
 		if (!intel_driver::CallKernelFunction(iqvw64e_device_handle, &status, address_of_entry_point, (PassAllocationAddressAsFirstParam ? realBase : param1), param2)) {
-			Log(L"[-] Failed to call driver entry" << std::endl);
+			Log(RED << L"[-] Failed to call Driver entry" << RESET << std::endl);
 			kernel_image_base = realBase;
 			break;
 		}
@@ -129,11 +121,11 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 		if (exitCode)
 			*exitCode = status;
 
-		Log(L"[+] DriverEntry returned 0x" << std::hex << status << std::endl);
+		Log(CYAN << L"[+] DriverEntry returned: " << DARK_GRAY << "0x" << std::hex << status << RESET << std::endl);
 
 		// Free memory
 		if (free) {
-			Log(L"[+] Freeing memory" << std::endl);
+			Log(BRIGHT_GREEN << L"[+] Freeing memory" << std::endl);
 			bool free_status = false;
 
 			if (mode == AllocationMode::AllocateIndependentPages)
@@ -145,10 +137,10 @@ uint64_t kdmapper::MapDriver(HANDLE iqvw64e_device_handle, BYTE* data, ULONG64 p
 			}
 
 			if (free_status) {
-				Log(L"[+] Memory has been released" << std::endl);
+				Log(L"[+] Memory has been released" << RESET << std::endl);
 			}
 			else {
-				Log(L"[-] WARNING: Failed to free memory!" << std::endl);
+				Log(ERROR_COLOR << L"[-] WARNING: Failed to free memory!" << RESET << std::endl);
 			}
 		}
 
@@ -195,7 +187,6 @@ void kdmapper::RelocateImageByDelta(portable_executable::vec_relocs relocs, cons
 	}
 }
 
-// Fix cookie by @Jerem584
 bool kdmapper::FixSecurityCookie(void* local_image, uint64_t kernel_image_base)
 {
 	auto headers = portable_executable::GetNtHeaders(local_image);
@@ -224,13 +215,13 @@ bool kdmapper::FixSecurityCookie(void* local_image, uint64_t kernel_image_base)
 		return false;
 	}
 
-	Log(L"[+] Fixing stack cookie" << std::endl);
+	Log(BRIGHT_BLUE << L"[+] Fixing stack cookie" << RESET << std::endl);
 
-	auto new_cookie = 0x2B992DDFA232 ^ GetCurrentProcessId() ^ GetCurrentThreadId(); // here we don't really care about the value of stack cookie, it will still works and produce nice result
+	auto new_cookie = 0x2B992DDFA232 ^ GetCurrentProcessId() ^ GetCurrentThreadId();
 	if (new_cookie == 0x2B992DDFA232)
 		new_cookie = 0x2B992DDFA233;
 
-	*(uintptr_t*)(stack_cookie) = new_cookie; // the _security_cookie_complement will be init by the driver itself if they use crt
+	*(uintptr_t*)(stack_cookie) = new_cookie;
 	return true;
 }
 

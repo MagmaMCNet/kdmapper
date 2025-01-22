@@ -1,42 +1,65 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="intel_driver.cpp" />
-    <ClCompile Include="kdmapper.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="portable_executable.cpp" />
-    <ClCompile Include="service.cpp" />
-    <ClCompile Include="utils.cpp" />
-    <ClCompile Include="SymbolsHandler.cpp" />
+    <ClCompile Include="intel_driver.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="kdmapper.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="portable_executable.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SymbolsHandler.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="service.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>kdmapper\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\utils.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\service.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\portable_executable.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\nt.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\kdmapper.hpp">
-      <Filter>include</Filter>
+    <ClInclude Include="include\DataStructs.hpp" />
+    <ClInclude Include="include\SymbolsHandler.hpp">
+      <Filter>kdmapper\Header</Filter>
     </ClInclude>
     <ClInclude Include="include\intel_driver.hpp">
-      <Filter>include</Filter>
+      <Filter>kdmapper\Header</Filter>
     </ClInclude>
     <ClInclude Include="include\intel_driver_resource.hpp">
-      <Filter>include</Filter>
+      <Filter>kdmapper\Header</Filter>
     </ClInclude>
-    <ClInclude Include="include\SymbolsHandler.hpp" />
-    <ClInclude Include="include\DataStructs.hpp" />
+    <ClInclude Include="include\kdmapper.hpp">
+      <Filter>kdmapper\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nt.hpp">
+      <Filter>kdmapper\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\portable_executable.hpp">
+      <Filter>kdmapper\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\service.hpp">
+      <Filter>kdmapper\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils.hpp">
+      <Filter>kdmapper\Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">
       <UniqueIdentifier>{ac359fba-b363-4b75-bd19-310104ec8f2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kdmapper">
+      <UniqueIdentifier>{2624616d-654f-4183-9f13-93b321969103}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kdmapper\Header">
+      <UniqueIdentifier>{64c4361a-8e6b-4b42-bd98-57ef44901452}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kdmapper\Source">
+      <UniqueIdentifier>{44b66805-4a5c-4919-a3b6-d8e69a9bf7de}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

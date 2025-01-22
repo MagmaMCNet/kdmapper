@@ -1,5 +1,72 @@
 #include "utils.hpp"
 
+void HexToRGB(const std::string& hex, int& r, int& g, int& b) {
+    std::stringstream ss;
+    ss << std::hex << hex.substr(0, 2);
+    ss >> r;
+    ss.clear();
+    ss << std::hex << hex.substr(2, 2);
+    ss >> g;
+    ss.clear();
+    ss << std::hex << hex.substr(4, 2);
+    ss >> b;
+}
+void BlendColor(int r1, int g1, int b1, int r2, int g2, int b2, float ratio, int& r, int& g, int& b) {
+    r = static_cast<int>(r1 + ratio * (r2 - r1));
+    g = static_cast<int>(g1 + ratio * (g2 - g1));
+    b = static_cast<int>(b1 + ratio * (b2 - b1));
+}
+
+std::string ColorText(const std::string& text, const std::string& hexFrom, const std::string& hexTo) {
+    int r1, g1, b1, r2, g2, b2;
+    HexToRGB(hexFrom, r1, g1, b1);
+    HexToRGB(hexTo, r2, g2, b2);
+
+    int length = 0;
+    for (size_t i = 0; i < text.length(); ++i) {
+        if ((text[i] & 0xC0) != 0x80) {
+            ++length;
+        }
+    }
+
+    std::string coloredText;
+    int charIndex = 0;
+    for (size_t i = 0; i < text.length();) {
+        float ratio = static_cast<float>(charIndex) / static_cast<float>(length - 1);
+        int r, g, b;
+        BlendColor(r1, g1, b1, r2, g2, b2, ratio, r, g, b);
+
+        std::stringstream ss;
+        ss << "\033[38;2;" << r << ";" << g << ";" << b << "m";
+
+        if ((text[i] & 0x80) == 0) {
+            ss << text[i];
+            ++i;
+        }
+        else if ((text[i] & 0xE0) == 0xC0) {
+            ss << text[i] << text[i + 1];
+            i += 2;
+        }
+        else if ((text[i] & 0xF0) == 0xE0) {
+            ss << text[i] << text[i + 1] << text[i + 2];
+            i += 3;
+        }
+        else if ((text[i] & 0xF8) == 0xF0) {
+            ss << text[i] << text[i + 1] << text[i + 2] << text[i + 3];
+            i += 4;
+        }
+        coloredText += ss.str();
+        ++charIndex;
+    }
+
+    coloredText += "\033[0m";
+    return coloredText;
+}
+std::wstring ColorText(const std::wstring& wtext, const std::string& hexFrom, const std::string& hexTo) {
+	std::string text(wtext.begin(), wtext.end());
+	std::string color = ColorText(text, hexFrom, hexTo);
+	return std::wstring(color.begin(), color.end());
+}
 std::wstring utils::GetFullTempPath() {
 	wchar_t temp_directory[MAX_PATH + 1] = { 0 };
 	const uint32_t get_temp_path_ret = GetTempPathW(sizeof(temp_directory) / 2, temp_directory);
